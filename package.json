@@ -47,11 +47,11 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "author": "Synesia",
+  "author": "Anthony Jeamme <anthony@synesia.ai> (https://synesia.ai)",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/synesia/jsonblade.git"
+    "url": "git+https://github.com/synesia/jsonblade.git"
   },
   "bugs": {
     "url": "https://github.com/synesia/jsonblade/issues"
