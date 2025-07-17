@@ -6,7 +6,7 @@ _Transform your data into JSON with precision and elegance._
 
 [![npm version](https://img.shields.io/npm/v/jsonblade.svg)](https://www.npmjs.com/package/jsonblade)
 [![npm downloads](https://img.shields.io/npm/dm/jsonblade.svg)](https://www.npmjs.com/package/jsonblade)
-[![Coverage](https://img.shields.io/badge/Coverage-82%25-brightgreen.svg)](https://github.com/synesia/jsonblade)
+[![Coverage](https://img.shields.io/badge/Coverage-82%25-brightgreen.svg)](https://github.com/Synesia/jsonblade)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/jsonblade)](https://bundlephobia.com/package/jsonblade)
 [![Node Version](https://img.shields.io/node/v/jsonblade.svg)](https://www.npmjs.com/package/jsonblade)
@@ -351,9 +351,9 @@ const template = `{
 // Invalid operations are handled gracefully
 ```
 
-## 📖 More Examples
+## 📖 Need Help?
 
-Check out more examples in our [examples repository](https://github.com/synesia/jsonblade-examples) or try JSONBlade in our [online playground](https://jsonblade.dev).
+For questions, issues, or feature requests, please visit our [GitHub repository](https://github.com/Synesia/jsonblade) or [open an issue](https://github.com/Synesia/jsonblade/issues).
 
 ## 📜 License
 
