@@ -1,0 +1,47 @@
+# Source files
+src/
+tsconfig.json
+jest.config.js
+
+# Development files
+**/*.test.ts
+**/__tests__/
+*.log
+coverage/
+
+# Build tools
+.nyc_output/
+node_modules/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Development configs
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Temporary files
+*.tmp
+*.temp
+*.tsbuildinfo
+
+# Exclude source maps and demo files for production
+dist/**/*.map
+dist/demo.*
+
+# Documentation drafts
+docs/
+examples/
+
+# Test files
+test-import.js 
