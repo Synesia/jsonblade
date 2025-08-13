@@ -1,0 +1,54 @@
+{
+  "user": {
+    "name": "{{ user.name }}",
+    "email": "{{ user.email | lower }}",
+    "isActive": {% if user.active %}true{% else %}false{% endif %},
+    "profile": {
+      "avatar": "{{ user.avatar | default('default.png') }}",
+      "bio": "{{ user.bio | truncate(100) }}"
+    }
+  },
+  {# Commentaire : Section des préférences utilisateur #}
+  "preferences": {
+    {% for pref in user.preferences %}
+    "{{ pref.key }}": "{{ pref.value }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+  },
+  "notifications": [
+    {% for notification in notifications %}
+    {
+      "id": {{ notification.id }},
+      "message": "{{ notification.message }}",
+      "type": "{{ notification.type }}",
+      "timestamp": "{{ notification.created_at | date('Y-m-d H:i:s') }}",
+      "read": {{ notification.read | yesno('true,false') }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  "config": {
+    {% set theme = user.theme | default('light') %}
+    "theme": "{{ theme }}",
+    "language": "{{ user.language | default('fr') }}",
+    "timezone": "{{ user.timezone | default('Europe/Paris') }}",
+    
+    {# Configuration conditionnelle #}
+    {% if user.is_premium %}
+    "features": {
+      "advanced_analytics": true,
+      "custom_themes": true,
+      "priority_support": true
+    }
+    {% else %}
+    "features": {
+      "advanced_analytics": false,
+      "custom_themes": false,
+      "priority_support": false
+    }
+    {% endif %}
+  },
+  "metadata": {
+    "generated_at": "{{ now() | date('Y-m-d\\TH:i:s\\Z') }}",
+    "version": "{{ app.version }}",
+    "environment": "{{ app.env }}"
+  }
+} 

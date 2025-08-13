@@ -1,0 +1,46 @@
+{
+  "name": "@jsonblade/monaco-jsonblade",
+  "version": "0.1.0",
+  "description": "Monaco Editor language support for JSONBlade templates",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "check-types": "tsc --noEmit"
+  },
+  "keywords": [
+    "monaco-editor",
+    "jsonblade",
+    "json-template",
+    "language-support",
+    "syntax-highlighting"
+  ],
+  "dependencies": {
+    "monaco-editor": "^0.52.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.15.3",
+    "jest": "^30.0.4",
+    "ts-jest": "^29.4.0",
+    "typescript": "5.8.2"
+  },
+  "peerDependencies": {
+    "monaco-editor": ">=0.45.0"
+  }
+}
