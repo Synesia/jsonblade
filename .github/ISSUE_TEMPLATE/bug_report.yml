@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a problem with JSONBlade or the Monaco plugin
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide minimal template/data to reproduce
+      placeholder: |
+        1. Template
+        2. Data
+        3. Expected vs actual
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: jsonblade, @jsonblade/monaco-jsonblade, Node, OS
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Any warnings or stack traces
+    validations:
+      required: false

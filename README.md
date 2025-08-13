@@ -1,181 +1,281 @@
-# 🗡️ JSONBlade
+# 🗡️ JSONBlade Monorepo
 
-**A sharp and modular JSON template engine with an extensible filter system.**
+JSONBlade est un moteur de templating JSON rapide, avec une API par instance (`new JSONBlade()`) et un système de filtres extensible. Ce monorepo contient le moteur, le plugin Monaco, et des outils internes.
 
-_Transform your data into JSON with precision and elegance._
+## 🧭 Monorepo overview
 
-[![npm version](https://img.shields.io/npm/v/jsonblade.svg)](https://www.npmjs.com/package/jsonblade)
-[![npm downloads](https://img.shields.io/npm/dm/jsonblade.svg)](https://www.npmjs.com/package/jsonblade)
-[![Coverage](https://img.shields.io/badge/Coverage-82%25-brightgreen.svg)](https://github.com/Synesia/jsonblade)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/jsonblade)](https://bundlephobia.com/package/jsonblade)
-[![Node Version](https://img.shields.io/node/v/jsonblade.svg)](https://www.npmjs.com/package/jsonblade)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+- packages/jsonblade: Core engine (stable)
+- packages/monaco-jsonblade: Monaco Editor language support (stable)
+- packages/eslint-config, packages/typescript-config: Tooling interne
+- apps/web: Demo playground (WIP, non prêt prod)
 
-## ✨ Why JSONBlade?
+Liens rapides:
 
-- 🎯 **80+ built-in filters** - Transform strings, arrays, objects, dates, numbers
-- 🔧 **Extensible** - Add custom filters with `registerFilter()`
-- ⚡ **Fast & cached** - Optimized performance with smart caching
-- 🔀 **Advanced features** - Conditions, loops, variables, comments
-- 🛡️ **Error resilient** - Graceful handling of missing data
-- 📝 **TypeScript native** - Full type support and autocompletion
-- 🎨 **Simple syntax** - Easy to learn, powerful to use
+- Core README: packages/jsonblade/README.md
+- Monaco README: packages/monaco-jsonblade/README.md
 
-## 📦 Installation
+Scripts utiles:
+
+- Install: pnpm install
+- Build core: pnpm -C packages/jsonblade build
+- Test core: pnpm -C packages/jsonblade test
+- Build monaco: pnpm -C packages/monaco-jsonblade build
+- Test monaco: pnpm -C packages/monaco-jsonblade test
+
+## 📦 Installation (core)
 
 ```bash
-npm install jsonblade
+pnpm add jsonblade
 ```
 
-## ⚡ Quick Start
+## 🚀 API de base (instance)
 
 ```typescript
-import { compileJSONTemplate } from "jsonblade";
+import { JSONBlade, TemplateFunction } from "jsonblade";
+
+const jb = new JSONBlade({ useBuiltins: true });
 
 const template = `{
-  "user": {
-    "name": "{{user.name | capitalize}}",
-    "email": "{{user.email | lower}}",
-    "status": "{{#if user.active}}Active{{#else}}Inactive{{/if}}"
-  },
-  "stats": {
-    "loginCount": {{user.logins | default(0)}},
-    "lastSeen": "{{user.lastLogin | formatDate('DD/MM/YYYY') | default('Never')}}"
-  }
+  "greeting": "Hello {{user.name | capitalize}}!",
+  "active": {{user.active}},
+  "count": {{items | length}}
 }`;
 
-const data = {
-  user: {
-    name: "alice smith",
-    email: "ALICE@EXAMPLE.COM",
-    active: true,
-    logins: 42,
-    lastLogin: "2024-01-15T10:30:00Z",
-  },
-};
-
-const result = compileJSONTemplate(template, data);
-console.log(result);
+const data = { user: { name: "alice", active: true }, items: [1, 2, 3] };
+const result = jb.compile(template, data);
 ```
 
-**Output:**
-
-```json
-{
-  "user": {
-    "name": "Alice smith",
-    "email": "alice@example.com",
-    "status": "Active"
-  },
-  "stats": {
-    "loginCount": 42,
-    "lastSeen": "15/01/2024"
-  }
-}
-```
-
-## ⚡ Async Templating
-
-JSONBlade supports asynchronous operations with `compileJSONTemplateAsync` and `compileAdvancedTemplateAsync`, enabling powerful integrations with external APIs, databases, and async operations:
+Async via `compileAsync` avec fonctions custom:
 
 ```typescript
-import { compileJSONTemplateAsync, registerAsyncFilter } from "jsonblade";
+const fns: TemplateFunction[] = [
+  { name: "fetchUser", func: async (id: string) => ({ id, name: "Alice" }) },
+];
 
-// Register custom async filters
-registerAsyncFilter("getSecret", async (secretName) => {
-  return process.env[secretName] || null;
-});
+const out = await jb.compileAsync(
+  `{"user": {{fetchUser(userId)}}}`,
+  { userId: "42" },
+  fns
+);
+```
 
-registerAsyncFilter("httpGet", async (url) => {
-  const response = await fetch(url);
-  return await response.text();
-});
+## ⚙️ Fonctionnalités
 
+- Directives: `{{#if}}/{{#else}}/{{/if}}`, `{{#unless}}/{{/unless}}`, `{{#each}}/{{/each}}`
+- Variables: `{{#set varName = expression}}` puis `{{varName}}`
+- Commentaires: `{{!-- ... --}}`
+- Filtres intégrés (extraits):
+  - String: `upper`, `lower`, `capitalize`, `trim`, `default`, `slug`
+  - Array: `length`, `first`, `last`, `join`, `map`, `filter`, `reverse`, `sort`, `unique`
+  - Object: `json`, `keys`, `values`, `get`, `has`, `entries`
+  - Logic: `equals`, `gt`, `gte`, `lt`, `lte`, `contains`, `startsWith`, `endsWith`, `bool`, `not`, `isEmpty`
+  - Number: `round`, `ceil`, `floor`, `abs`, `add`, `subtract`, `multiply`, `divide`, `currency`, `percentage`
+  - Date: `formatDate`, `fromNow`, `isoDate`, `timestamp`
+  - Validation/Util: `isEmail`, `isURL`, `isUUID`, `isNumber`, `isInteger`, `isPhoneNumber`, `minLength`, `maxLength`, `matches`, `base64Encode`, `base64Decode`, `escape`, `unescape`, `urlEncode`, `urlDecode`
+
+Notes:
+
+- Le pipeline async cible les fonctions custom; les filtres s’exécutent en sync pour l’instant.
+- Aucun système de cache n’est inclus.
+
+## 🔧 Built-in Filters
+
+JSONBlade includes comprehensive filters for data transformation:
+
+### String Filters
+
+- `upper` - Convert to uppercase
+- `lower` - Convert to lowercase
+- `capitalize` - Capitalize first letter
+- `trim` - Remove whitespace
+- `default(value)` - Fallback value
+
+### Array Filters
+
+- `length` - Get array/string/object length
+- `first` - Get first element
+- `last` - Get last element
+- `join(separator)` - Join array elements
+- `map(property)` - Extract property from objects
+- `filter(property, value)` - Filter by property value
+
+### Object Filters
+
+- `keys` - Get object keys
+- `values` - Get object values
+- `get(property)` - Get property value
+- `has(property)` - Check if property exists
+- `json` - Serialize to JSON
+
+### Logic Filters
+
+- `equals(value)` - Equality comparison
+- `gt(value)` / `gte(value)` - Greater than
+- `lt(value)` / `lte(value)` - Less than
+- `not` - Boolean negation
+- `bool` - Convert to boolean
+
+### Date Filters
+
+- `formatDate(pattern)` - Format date
+- `addDays(number)` - Add days
+- `isoDate` - ISO format
+- `timestamp` - Unix timestamp
+
+### Validation Filters
+
+- `isEmail` - Email validation
+- `base64Encode` / `base64Decode` - Base64 operations
+- `escape` / `unescape` - HTML escape
+- `urlEncode` / `urlDecode` - URL encoding
+
+### Example Usage
+
+```typescript
 const template = `{
-  "config": {
-    "apiKey": "{{secretName | getSecret}}",
-    "userCount": "{{apiUrl | httpGet | jsonParse | get('total')}}",
-    "timestamp": "{{'' | getCurrentTime}}"
-  }
+  "formatted": "{{name | upper | trim}}",
+  "score": {{points | add(bonus) | round(2)}},
+  "date": "{{created | formatDate('DD/MM/YYYY')}}",
+  "valid": {{email | isEmail}}
 }`;
-
-const data = {
-  secretName: "API_KEY",
-  apiUrl: "https://api.example.com/stats",
-};
-
-const result = await compileJSONTemplateAsync(template, data);
-console.log(result);
 ```
 
-### Built-in Async Filters
+## 🔧 Template Functions
 
-JSONBlade includes powerful async filters out of the box:
+JSONBlade now supports custom functions that can be called directly in templates using function syntax `{{functionName(args)}}`. **No functions are included by default** - you have complete control over what functions are available.
 
-```typescript
-// Environment & Secrets
-"{{API_KEY | getSecret}}"; // Get environment variable
-"{{'' | getSecret('DATABASE_URL')}}"; // Get specific secret
-
-// HTTP Operations
-"{{url | httpGet}}"; // GET request
-"{{data | httpPost(url)}}"; // POST request
-"{{response | jsonParse}}"; // Parse JSON response
-
-// File Operations
-"{{filename | loadFile}}"; // Read file content
-"{{content | saveFile(path)}}"; // Write file content
-
-// Utilities
-"{{value | delay(1000)}}"; // Add delay (ms)
-"{{2 | sleep}}"; // Sleep for seconds
-"{{'' | getCurrentTime}}"; // Current ISO time
-"{{'' | getCurrentTimestamp}}"; // Current timestamp
-
-// Caching
-"{{expensiveData | cache(key, 300)}}"; // Cache for 5 minutes
-"{{command | exec}}"; // Execute shell command
-"{{data | retry(3, 1000)}}"; // Retry with delay
-```
-
-### Async Advanced Templates
-
-Use async filters in conditions, loops, and variables:
+### Synchronous Functions
 
 ```typescript
-import { compileAdvancedTemplateAsync } from "jsonblade";
+import { JSONBlade, TemplateFunction } from "jsonblade";
 
-const template = `{
-  {{#set userCount = 'https://api.example.com/users' | httpGet | jsonParse | get('count')}}
-  {{#set isProduction = 'NODE_ENV' | getSecret | equals('production')}}
-  
-  "environment": "{{#if isProduction}}Production{{#else}}Development{{/if}}",
-  "users": {
-    "total": {{userCount}},
-    "status": "{{#if userCount | gt(100)}}High Load{{#else}}Normal{{/if}}"
+// Define your custom functions
+const functions: TemplateFunction[] = [
+  {
+    name: "getSecret",
+    func: (key: string) => process.env[key] || null,
   },
-  
-  "services": [
-    {{#each endpoints}}
-    {{#set health = url | httpGet | jsonParse}}
-    {
-      "name": "{{name}}",
-      "status": "{{health.status | default('unknown')}}",
-      "lastCheck": "{{'' | getCurrentTime}}"
-    }{{#unless @last}},{{/unless}}
-    {{/each}}
-  ]
+  {
+    name: "add",
+    func: (a: number, b: number) => a + b,
+  },
+  {
+    name: "formatPhone",
+    func: (phone: string) => {
+      const cleaned = phone.replace(/\D/g, "");
+      return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
+    },
+  },
+];
+
+// Use functions in template
+const template = `{
+  "apiKey": "{{getSecret('API_KEY')}}",
+  "sum": {{add(5, 3)}},
+  "phone": "{{formatPhone('1234567890')}}",
+  "greeting": "Hello {{name}}!"
 }`;
 
-const data = {
-  endpoints: [
-    { name: "API", url: "https://api.example.com/health" },
-    { name: "Database", url: "https://db.example.com/ping" },
-  ],
-};
+const data = { name: "World" };
+const result = new JSONBlade({ useBuiltins: true }).compile(
+  template,
+  data,
+  functions
+);
+// Result: { apiKey: "your_api_key", sum: 8, phone: "(123) 456-7890", greeting: "Hello World!" }
+```
 
-const result = await compileAdvancedTemplateAsync(template, data);
+### Asynchronous Functions
+
+```typescript
+import { JSONBlade, TemplateFunction } from "jsonblade";
+
+// Define async functions
+const asyncFunctions: TemplateFunction[] = [
+  {
+    name: "fetchData",
+    func: async (url: string) => {
+      const response = await fetch(url);
+      return response.json();
+    },
+  },
+  {
+    name: "getCurrentTime",
+    func: async () => new Date().toISOString(),
+  },
+  {
+    name: "validateEmail",
+    func: async (email: string) => {
+      // Simulate async validation
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      return email.includes("@") && email.includes(".");
+    },
+  },
+];
+
+// Use async functions
+const asyncTemplate = `{
+  "data": {{fetchData('https://api.example.com/data')}},
+  "timestamp": "{{getCurrentTime()}}",
+  "emailValid": {{validateEmail(user.email)}}
+}`;
+
+const data = { user: { email: "test@example.com" } };
+const result = await new JSONBlade({ useBuiltins: true }).compileAsync(
+  asyncTemplate,
+  data,
+  asyncFunctions
+);
+```
+
+### Function vs Filter Syntax
+
+```typescript
+// Function syntax: {{functionName(args)}}
+"{{getSecret('API_KEY')}}"; // Call function directly
+"{{add(5, 3)}}"; // Function with multiple arguments
+
+// Filter syntax: {{value | filterName}}
+"{{name | upper}}"; // Transform value through filter
+"{{items | length}}"; // Get length of array
+```
+
+**When to use functions vs filters:**
+
+- **Functions**: When you need to call operations directly or compute values from scratch
+- **Filters**: When you want to transform existing values in a pipeline
+
+### Key Features:
+
+- ✅ **Complete control**: No default functions, define only what you need
+- ✅ **Type safety**: Full TypeScript support with `TemplateFunction` interface
+- ✅ **Sync and async**: Both synchronous and asynchronous functions supported
+- ✅ **Argument parsing**: Supports strings (`'value'`), numbers (`42`), and data paths (`user.name`)
+- ✅ **Fallback behavior**: Unknown functions fallback to data path resolution
+- ✅ **Secure**: No hardcoded functions that could be security risks
+
+## 🔄 Async Operations
+
+```typescript
+import { JSONBlade, TemplateFunction } from "jsonblade";
+
+const asyncFunctions: TemplateFunction[] = [
+  {
+    name: "fetchUser",
+    func: async (id: string) => {
+      const response = await fetch(`/api/users/${id}`);
+      return response.json();
+    },
+  },
+];
+
+const jb = new JSONBlade({ useBuiltins: true });
+const template = `{"user": {{fetchUser(userId)}}}`;
+const result = await jb.compileAsync(
+  template,
+  { userId: "123" },
+  asyncFunctions
+);
 ```
 
 ## 🔥 Advanced Templating
@@ -243,7 +343,7 @@ const template = `{
 
 ## 🛠️ Available Filters
 
-JSONBlade comes with 80+ built-in filters organized by category:
+JSONBlade comes with a comprehensive set of built-in filters organized by category:
 
 ### String Filters
 
@@ -391,24 +491,10 @@ const template = `{
   "emailValid": {{email | validateEmail}}
 }`;
 
-const result = await compileJSONTemplateAsync(template, data);
+// Note: engine does not execute async filters in pipeline yet
 ```
 
-## ⚡ Performance & Caching
-
-JSONBlade automatically caches compiled templates for better performance:
-
-```typescript
-import { getCachedTemplate, clearTemplateCache } from "jsonblade";
-
-// Templates are automatically cached
-const result1 = compileJSONTemplate(template, data1);
-const result2 = compileJSONTemplate(template, data2); // Uses cache
-
-// Manual cache management
-const cached = getCachedTemplate("my-template");
-clearTemplateCache(); // Clear all cached templates
-```
+<!-- No automatic caching in the current engine version -->
 
 ## 🔧 Configuration
 
@@ -419,7 +505,7 @@ import { setTemplateConfig } from "jsonblade";
 
 setTemplateConfig({
   strictMode: true, // Throw errors instead of warnings
-  maxCacheSize: 1000, // Maximum cached templates
+  // no cache settings in current version
   customDelimiters: {
     // Custom template delimiters
     start: "[[",
@@ -452,42 +538,48 @@ const apiTemplate = `{
 }`;
 ```
 
-### Async API Integration
+### Dynamic Configuration with Custom Functions
 
 ```typescript
-const asyncApiTemplate = `{
-  {{#set weatherData = city | httpGet('https://api.weather.com/v1/current?q=') | jsonParse}}
-  {{#set userProfile = userId | findUser}}
-  
-  "user": {
-    "name": "{{userProfile.name}}",
-    "location": "{{city}}",
-    "weather": {
-      "temperature": "{{weatherData.temperature}}°C",
-      "condition": "{{weatherData.condition | capitalize}}"
+// Define functions for configuration
+const configFunctions: TemplateFunction[] = [
+  {
+    name: "getSecret",
+    func: (key: string) => process.env[key] || null,
+  },
+  {
+    name: "getCurrentTime",
+    func: () => new Date().toISOString(),
+  },
+];
+
+const configTemplate = `{
+  "environment": "{{env | upper}}",
+  "database": {
+    "host": "{{db.host | default('localhost')}}",
+    "port": {{db.port | default(5432)}},
+    "ssl": {{env | equals('production')}},
+    "password": "{{getSecret('DB_PASSWORD')}}"
+  },
+  "services": {
+    "redis": {
+      "url": "{{getSecret('REDIS_URL') | default('redis://localhost:6379')}}"
+    },
+    "apiKeys": {
+      "stripe": "{{getSecret('STRIPE_SECRET_KEY')}}",
+      "sendgrid": "{{getSecret('SENDGRID_API_KEY')}}"
     }
   },
-  "recommendations": [
-    {{#each userProfile.interests}}
-    {{#set suggestions = . | httpGet('https://api.recommendations.com/suggest?category=') | jsonParse}}
-    {{#each suggestions}}
-    {
-      "title": "{{title}}",
-      "score": {{score | round(2)}}
-    }{{#unless @last}},{{/unless}}
-    {{/each}}
-    {{/each}}
-  ],
   "metadata": {
-    "generatedAt": "{{'' | getCurrentTime}}",
-    "cached": {{userProfile | cache('user-' + userId, 300) | bool}}
+    "generatedAt": "{{getCurrentTime()}}"
   }
 }`;
 
-const result = await compileAdvancedTemplateAsync(asyncApiTemplate, {
-  city: "Paris",
-  userId: "12345",
-});
+const config = new JSONBlade({ useBuiltins: true }).compile(
+  configTemplate,
+  { env: "production", db: { host: "prod-db.example.com", port: 5432 } },
+  configFunctions
+);
 ```
 
 ### Email Templates
@@ -503,81 +595,36 @@ const emailTemplate = `{
 }`;
 ```
 
-### Dynamic Configuration with Secrets
+### Custom Function Examples
 
 ```typescript
-const configTemplate = `{
-  "environment": "{{env | upper}}",
-  "database": {
-    "host": "{{db.host | default('localhost')}}",
-    "port": {{db.port | default(5432)}},
-    "ssl": {{env | equals('production')}},
-    "password": "{{'' | getSecret('DB_PASSWORD')}}"
+// Define application-specific functions
+const appFunctions: TemplateFunction[] = [
+  {
+    name: "calculateTax",
+    func: (amount: number, rate: number = 0.1) => amount * rate,
   },
-  "services": {
-    "redis": {
-      "url": "{{'' | getSecret('REDIS_URL') | default('redis://localhost:6379')}}"
+  {
+    name: "formatCurrency",
+    func: (amount: number, currency: string = "USD") => {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: currency,
+      }).format(amount);
     },
-    "apiKeys": {
-      "stripe": "{{'' | getSecret('STRIPE_SECRET_KEY')}}",
-      "sendgrid": "{{'' | getSecret('SENDGRID_API_KEY')}}"
-    }
   },
-  "features": [
-    {{#each features}}
-    "{{name | slug}}"{{#unless @last}},{{/unless}}
-    {{/each}}
-  ]
+  {
+    name: "generateId",
+    func: () => Math.random().toString(36).substring(2, 15),
+  },
+];
+
+const invoiceTemplate = `{
+  "id": "{{generateId()}}",
+  "subtotal": "{{formatCurrency(amount)}}",
+  "tax": "{{formatCurrency(calculateTax(amount, 0.08))}}",
+  "total": "{{formatCurrency(add(amount, calculateTax(amount, 0.08)))}}"
 }`;
-
-// Use async compilation for secret access
-const config = await compileAdvancedTemplateAsync(configTemplate, {
-  env: "production",
-  db: { host: "prod-db.example.com", port: 5432 },
-  features: [{ name: "User Authentication" }, { name: "Payment Processing" }],
-});
-```
-
-### Microservice Health Monitoring
-
-```typescript
-const healthTemplate = `{
-  "status": "{{#if allHealthy}}healthy{{#else}}degraded{{/if}}",
-  "services": [
-    {{#each services}}
-    {{#set health = endpoint | httpGet | jsonParse}}
-    {
-      "name": "{{name}}",
-      "status": "{{health.status | default('unknown')}}",
-      "response_time": "{{health.responseTime | default(0)}}ms",
-      "last_check": "{{'' | getCurrentTime}}",
-      "healthy": {{health.status | equals('ok')}}
-    }{{#unless @last}},{{/unless}}
-    {{/each}}
-  ],
-  "summary": {
-    {{#set healthyCount = services | map('endpoint') | asyncFilter('healthy') | length}}
-    "total": {{services | length}},
-    "healthy": {{healthyCount}},
-    "uptime": "{{healthyCount | divide(services | length) | multiply(100) | round(1)}}%"
-  }
-}`;
-
-const healthData = {
-  services: [
-    { name: "API Gateway", endpoint: "https://api.example.com/health" },
-    { name: "User Service", endpoint: "https://users.example.com/health" },
-    {
-      name: "Payment Service",
-      endpoint: "https://payments.example.com/health",
-    },
-  ],
-};
-
-const healthReport = await compileAdvancedTemplateAsync(
-  healthTemplate,
-  healthData
-);
 ```
 
 ## 📚 Error Handling
